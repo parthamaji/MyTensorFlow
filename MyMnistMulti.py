@@ -15,10 +15,11 @@ flags.DEFINE_string('summaries_dir', '/tmp/mnist_logs/', "logs")
 mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
 
 #Define model
-x = tf.placeholder(tf.float32, [None, 784])
-y_actual = tf.placeholder(tf.float32, [None, 10])
-x_image = tf.reshape(x, [-1,28,28,1])
-print "Shape(x_image): " , x_image
+with tf.name_scope('DataSetXY'):
+    x = tf.placeholder(tf.float32, [None, 784], "X")
+    y_actual = tf.placeholder(tf.float32, [None, 10], "Y")
+    x_image = tf.reshape(x, [-1,28,28,1])
+    print "Shape(x_image): " , x_image
 
 #Define weight and bias variable
 def weig_variable(shape):
@@ -130,8 +131,8 @@ writer_summary = tf.train.SummaryWriter(FLAGS.summaries_dir, sess.graph.as_graph
 # Train + Test
 ###############################################################################
 #Train and report training accuracy
-for i in range(200):
-    batch_xs, batch_ys = mnist.train.next_batch(50)
+for i in range(2000):
+    batch_xs, batch_ys = mnist.train.next_batch(100)
     sess.run(train_step, feed_dict={x: batch_xs, y_actual :batch_ys, keep_prob: 0.5})
     if i % 10 == 0:
         train_accuracy = sess.run(accuracy, feed_dict={x: batch_xs, y_actual :batch_ys, keep_prob: 1.0})
