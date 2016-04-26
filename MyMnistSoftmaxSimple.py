@@ -39,9 +39,9 @@ sess = tf.Session()
 sess.run(init)
 
 #TensorBoard
-tf.histogram_summary('weights', W)
-tf.histogram_summary('bias', b)
-tf.histogram_summary('y', y)
+#tf.histogram_summary('weights', W)
+#tf.histogram_summary('bias', b)
+#tf.histogram_summary('y', y)
 tf.scalar_summary('accuracy', accuracy)
 tf.scalar_summary('xent', cross_entropy)
 
@@ -49,8 +49,8 @@ merged_summary = tf.merge_all_summaries()
 writer_summary = tf.train.SummaryWriter(FLAGS.summaries_dir, sess.graph.as_graph_def(add_shapes=True))
 
 #Train model
-for i in range(1000):
-  batch_xs, batch_ys = mnist.train.next_batch(100)
+for i in range(100000):
+  batch_xs, batch_ys = mnist.train.next_batch(225)
   sess.run(train_step, {x: batch_xs, y_ :batch_ys})
   summary = sess.run(merged_summary, {x: batch_xs, y_ : batch_ys})
   writer_summary.add_summary(summary, i)

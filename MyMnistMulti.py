@@ -72,7 +72,7 @@ with tf.name_scope('FC2'):
     y_predict = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
 ###############################################################################
-# Cost + Session + Accuracy + TensorBoard
+# Define Cost + Accuracy
 ###############################################################################
 #Loss
 with tf.name_scope('Xentropy'):
@@ -85,6 +85,9 @@ with tf.name_scope('Accuracy'):
     correct_prediction = tf.equal(tf.argmax(y_predict, 1), tf.argmax(y_actual, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
+###############################################################################
+# Set up Session + TensorBoard
+###############################################################################
 #Create a Session
 sess = tf.Session()
 sess.run(tf.initialize_all_variables())
@@ -93,9 +96,15 @@ sess.run(tf.initialize_all_variables())
 tf.histogram_summary('W_conv1', W_conv1)
 tf.histogram_summary('b_conv1', b_conv1)
 tf.histogram_summary('h_conv1', h_conv1)
+tf.histogram_summary('W_conv2', W_conv1)
+tf.histogram_summary('b_conv2', b_conv1)
+tf.histogram_summary('h_conv2', h_conv1)
 tf.histogram_summary('W_fc1', W_fc1)
 tf.histogram_summary('b_fc1', b_fc1)
 tf.histogram_summary('h_fc1', h_fc1)
+tf.histogram_summary('W_fc2', W_fc1)
+tf.histogram_summary('b_fc2', b_fc1)
+tf.histogram_summary('h_fc2', h_fc1)
 tf.scalar_summary('accuracy', accuracy)
 tf.scalar_summary('cross_entropy', cross_entropy)
 
@@ -117,6 +126,9 @@ with tf.name_scope('VIS_Conv2'):
 merged_summary = tf.merge_all_summaries()
 writer_summary = tf.train.SummaryWriter(FLAGS.summaries_dir, sess.graph.as_graph_def(add_shapes=True))
 
+###############################################################################
+# Train + Test
+###############################################################################
 #Train and report training accuracy
 for i in range(200):
     batch_xs, batch_ys = mnist.train.next_batch(50)
