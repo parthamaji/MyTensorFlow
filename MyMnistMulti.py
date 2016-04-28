@@ -1,12 +1,20 @@
 from tensorflow.examples.tutorials.mnist import input_data
 
 import tensorflow as tf
+import sys
+
+try:
+    log_subdir = sys.argv[1]
+except IndexError:
+    print "Usage: python filename.py run_dir"
+    sys.exit()
 
 #Define Flags
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_string('data_dir', '/tmp/data/', "data")
-flags.DEFINE_string('summaries_dir', '/tmp/mnist_logs/', "logs")
+mnist_logs = '/tmp/mnist_logs/' + log_subdir
+flags.DEFINE_string('summaries_dir', mnist_logs, "logs")
 
 ###############################################################################
 # Set up + Dataset
@@ -23,7 +31,7 @@ with tf.name_scope('DataSetXY'):
 
 #Define weight and bias variable
 def weig_variable(shape):
-    initial = tf.truncated_normal(shape, stddev = 0.1)
+    initial = tf.truncated_normal(shape, stddev = 0.005)
     return tf.Variable(initial)
 
 def bias_variable(shape):
@@ -131,8 +139,8 @@ writer_summary = tf.train.SummaryWriter(FLAGS.summaries_dir, sess.graph.as_graph
 # Train + Test
 ###############################################################################
 #Train and report training accuracy
-for i in range(2000):
-    batch_xs, batch_ys = mnist.train.next_batch(100)
+for i in range(200):
+    batch_xs, batch_ys = mnist.train.next_batch(500)
     sess.run(train_step, feed_dict={x: batch_xs, y_actual :batch_ys, keep_prob: 0.5})
     if i % 10 == 0:
         train_accuracy = sess.run(accuracy, feed_dict={x: batch_xs, y_actual :batch_ys, keep_prob: 1.0})
