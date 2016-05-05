@@ -3,6 +3,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
 import numpy as np
 import sys
+import os.path
 
 try:
     log_subdir = sys.argv[1]
@@ -14,9 +15,10 @@ except IndexError:
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_string('data_dir', '/tmp/data/', "data")
-mnist_logs = '/tmp/mnist_logs/' + log_subdir
-flags.DEFINE_string('summaries_dir', mnist_logs, "logs")
-
+mnist_train = os.path.join("/local/scratch/ppm27/mnist_multi", log_subdir)
+tf.app.flags.DEFINE_string('train_dir', mnist_train,
+                           """Directory where to write event logs """
+                           """and checkpoint.""")
 ###############################################################################
 # Set up + Dataset
 ###############################################################################
@@ -99,10 +101,12 @@ with tf.name_scope('Accuracy'):
 # Set up Session + TensorBoard
 ###############################################################################
 #Create a Session
+checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
+
 sess = tf.Session()
 saver = tf.train.Saver()
 #sess.run(tf.initialize_all_variables())
-saver.restore(sess, "/tmp/mnist_model.ckpt")
+saver.restore(sess, checkpoint_path)
 
 #TensorBoard
 tf.histogram_summary('W_conv1', W_conv1)
@@ -136,7 +140,7 @@ with tf.name_scope('VIS_Conv2'):
     tf.image_summary("second_conv", vis_h_conv2, max_images=1)
 
 merged_summary = tf.merge_all_summaries()
-writer_summary = tf.train.SummaryWriter(FLAGS.summaries_dir, sess.graph.as_graph_def(add_shapes=True))
+writer_summary = tf.train.SummaryWriter(FLAGS.train_dir, sess.graph.as_graph_def(add_shapes=True))
 
 ###############################################################################
 # Train + Test
@@ -152,7 +156,8 @@ for i in range(100):
         writer_summary.add_summary(summary, i)
         #print(np.linalg.norm(sess.run(W_fc2)))
 
-save_path = saver.save(sess, "/tmp/mnist_model.ckpt")
+#Save parameters at the end of training
+save_path = saver.save(sess, checkpoint_path)
 print("Model saved in file: %s" % save_path)
  
 #Measure accuracy on test images
