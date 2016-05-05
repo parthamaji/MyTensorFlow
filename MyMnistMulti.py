@@ -1,6 +1,7 @@
 from tensorflow.examples.tutorials.mnist import input_data
 
 import tensorflow as tf
+import numpy as np
 import sys
 
 try:
@@ -99,7 +100,9 @@ with tf.name_scope('Accuracy'):
 ###############################################################################
 #Create a Session
 sess = tf.Session()
-sess.run(tf.initialize_all_variables())
+saver = tf.train.Saver()
+#sess.run(tf.initialize_all_variables())
+saver.restore(sess, "/tmp/mnist_model.ckpt")
 
 #TensorBoard
 tf.histogram_summary('W_conv1', W_conv1)
@@ -139,16 +142,28 @@ writer_summary = tf.train.SummaryWriter(FLAGS.summaries_dir, sess.graph.as_graph
 # Train + Test
 ###############################################################################
 #Train and report training accuracy
-for i in range(200):
-    batch_xs, batch_ys = mnist.train.next_batch(500)
+for i in range(100):
+    batch_xs, batch_ys = mnist.train.next_batch(50)
     sess.run(train_step, feed_dict={x: batch_xs, y_actual :batch_ys, keep_prob: 0.5})
     if i % 10 == 0:
         train_accuracy = sess.run(accuracy, feed_dict={x: batch_xs, y_actual :batch_ys, keep_prob: 1.0})
         print("Step %d, training accuracy %g"%(i, train_accuracy))
         summary = sess.run(merged_summary, {x: batch_xs, y_actual : batch_ys, keep_prob: 1.0})
         writer_summary.add_summary(summary, i)
+        #print(np.linalg.norm(sess.run(W_fc2)))
+
+save_path = saver.save(sess, "/tmp/mnist_model.ckpt")
+print("Model saved in file: %s" % save_path)
  
 #Measure accuracy on test images
 print("test accuracy %g"% \
        sess.run(accuracy, feed_dict={x: mnist.test.images, y_actual: mnist.test.labels, keep_prob: 1.0}))
+
+
+#with tf.variable_scope("Conv1") as scope_Conv1:
+#    W1 = tf.get_variable("W_conv1", [5, 5, 1, 32])
+#    print("W_conv1: "%W1)
+#print("W_conv2: "%sess.run(W_conv2))
+#print("W_fc1: "%sess.run(W_fc1))
+#print("W_fc2: "%sess.run(W_fc2))
 
