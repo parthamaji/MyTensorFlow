@@ -4,21 +4,32 @@ import tensorflow as tf
 import numpy as np
 import sys
 import os.path
+import argparse
 
-try:
-    log_subdir = sys.argv[1]
-except IndexError:
-    print "Usage: python filename.py run_dir"
-    sys.exit()
+#try:
+#    log_subdir = sys.argv[1]
+#except IndexError:
+#    print "Usage: python filename.py run_dir"
+#    sys.exit()
+
+#Parser
+parser = argparse.ArgumentParser()
+parser.add_argument("--mode", required = True, help = "options: init (trains from scratch), load (loads a checkpoint)")
+parser.add_argument("--logdir", required = True, help = "logdir for summary and checkpoint")
+args = parser.parse_args()
+#if not any(args):
+#    parse.error('No arguments provided! Try --help')
+#print args.init
+#print args.logdir
 
 #Define Flags
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_string('data_dir', '/tmp/data/', "data")
-mnist_train = os.path.join("/local/scratch/ppm27/mnist_multi", log_subdir)
-tf.app.flags.DEFINE_string('train_dir', mnist_train,
-                           """Directory where to write event logs """
-                           """and checkpoint.""")
+mnist_train = os.path.join("/local/scratch/ppm27/mnist_multi", args.logdir)
+tf.app.flags.DEFINE_string('train_dir', mnist_train, "Directory where to write event logs and checkpoint.")
+checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
+
 ###############################################################################
 # Set up + Dataset
 ###############################################################################
@@ -30,11 +41,11 @@ with tf.name_scope('DataSetXY'):
     x = tf.placeholder(tf.float32, [None, 784], "X")
     y_actual = tf.placeholder(tf.float32, [None, 10], "Y")
     x_image = tf.reshape(x, [-1,28,28,1])
-    print "Shape(x_image): " , x_image
+    #print "Shape(x_image): " , x_image
 
 #Define weight and bias variable
 def weig_variable(shape):
-    initial = tf.truncated_normal(shape, stddev = 0.005)
+    initial = tf.truncated_normal(shape, stddev = 0.05)
     return tf.Variable(initial)
 
 def bias_variable(shape):
@@ -101,12 +112,15 @@ with tf.name_scope('Accuracy'):
 # Set up Session + TensorBoard
 ###############################################################################
 #Create a Session
-checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
 
 sess = tf.Session()
 saver = tf.train.Saver()
-#sess.run(tf.initialize_all_variables())
-saver.restore(sess, checkpoint_path)
+if args.mode == "init":
+    sess.run(tf.initialize_all_variables())
+elif args.mode == "load":    
+    saver.restore(sess, checkpoint_path)
+else:
+    print("Session mode argument missing!")
 
 #TensorBoard
 tf.histogram_summary('W_conv1', W_conv1)
@@ -147,7 +161,7 @@ writer_summary = tf.train.SummaryWriter(FLAGS.train_dir, sess.graph.as_graph_def
 ###############################################################################
 #Train and report training accuracy
 for i in range(100):
-    batch_xs, batch_ys = mnist.train.next_batch(50)
+    batch_xs, batch_ys = mnist.train.next_batch(32)
     sess.run(train_step, feed_dict={x: batch_xs, y_actual :batch_ys, keep_prob: 0.5})
     if i % 10 == 0:
         train_accuracy = sess.run(accuracy, feed_dict={x: batch_xs, y_actual :batch_ys, keep_prob: 1.0})
@@ -161,14 +175,6 @@ save_path = saver.save(sess, checkpoint_path)
 print("Model saved in file: %s" % save_path)
  
 #Measure accuracy on test images
+print("running test accuracy..")
 print("test accuracy %g"% \
        sess.run(accuracy, feed_dict={x: mnist.test.images, y_actual: mnist.test.labels, keep_prob: 1.0}))
-
-
-#with tf.variable_scope("Conv1") as scope_Conv1:
-#    W1 = tf.get_variable("W_conv1", [5, 5, 1, 32])
-#    print("W_conv1: "%W1)
-#print("W_conv2: "%sess.run(W_conv2))
-#print("W_fc1: "%sess.run(W_fc1))
-#print("W_fc2: "%sess.run(W_fc2))
-
